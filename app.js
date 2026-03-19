@@ -298,7 +298,50 @@ window.onload = function () {
   enableDragReorder(psdGrid, psdQueue, renderPsdThumbs);
   enableDragReorder(imgGrid, imgQueue, renderImgThumbs);
   updateGenerateButton();
+
+  // ── URL param: ?psd=template-id  pre-loads a library template ──
+  const urlPsd = new URLSearchParams(window.location.search).get('psd');
+  if (urlPsd) loadTemplateFromLibrary(urlPsd);
 };
+
+// ── Load a template from library.json by id ───────────────────
+async function loadTemplateFromLibrary(id) {
+  showToast('Loading template from library…', 'info');
+  try {
+    const libRes  = await fetch('library.json');
+    const library = await libRes.json();
+    const entry   = library.find(t => t.id === id);
+    if (!entry) { showToast('Template not found in library.json', 'warn'); return; }
+
+    // Fetch the PSD file
+    const psdRes  = await fetch(entry.psd);
+    if (!psdRes.ok) throw new Error(`Could not fetch ${entry.psd}`);
+    const blob    = await psdRes.blob();
+    const file    = new File([blob], entry.id + '.psd', { type: 'application/octet-stream' });
+
+    // Inject into the PSD queue exactly as if the user uploaded it
+    const existing = new Set(psdQueue.map(f => f.name));
+    if (!existing.has(file.name)) {
+      psdQueue.push({ file, name: file.name, previewUrl: null });
+      renderPsdThumbs();
+      psdCountBadge.textContent = `${psdQueue.length} file${psdQueue.length > 1 ? 's' : ''}`;
+      psdCountBadge.classList.remove('hidden');
+      if (psdStatus) psdStatus.textContent = `${psdQueue.length} template${psdQueue.length > 1 ? 's' : ''} loaded`;
+      panelImg.classList.remove('disabled');
+      inImg.disabled = false;
+      updateGenerateButton();
+      schedulePsdPreviews();
+    }
+
+    showToast(`✓ "${entry.name}" loaded — add your images to begin`, 'success');
+
+    // Clean up the URL so refreshing doesn't reload it
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch(err) {
+    console.error('loadTemplateFromLibrary:', err);
+    showToast('Failed to load template: ' + err.message, 'warn');
+  }
+}
 
 // New Batch vs Start Batch
 function handleGenClick() {

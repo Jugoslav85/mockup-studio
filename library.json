@@ -1,0 +1,12 @@
+[
+  {
+    "id": "oak-poster-frame",
+    "name": "Oak Poster Frame on Wall",
+    "category": "poster",
+    "thumb": "thumbs/oak-poster-frame.jpg",
+    "psd": "psds/oak-poster-frame.psd",
+    "free": true,
+    "sos": 1,
+    "tags": ["frame", "wall", "interior"]
+  }
+]
