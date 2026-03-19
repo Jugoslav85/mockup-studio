@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup Studio — Batch PSD Mockup Generator</title>
+    <meta name="description" content="Generate product mockups in bulk. Upload your PSD templates and designs, get polished mockups in seconds. No Photoshop needed.">
+    <meta name="theme-color" content="#07070d">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>MS</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="aurora-bg">
+    <div class="aurora-orb orb-1"></div><div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div><div class="aurora-orb orb-4"></div>
+</div>
+<div class="noise-overlay"></div>
+
+<div class="main-layout">
+
+    <header>
+        <div class="header-left">
+            <div class="logo-mark">MS</div>
+            <div class="header-text">
+                <h1>Mockup <span>Studio</span></h1>
+                <p class="tagline">Grouped batch generator</p>
+            </div>
+        </div>
+        <div class="header-pip">
+            <span class="pip-dot"></span>
+            <span class="pip-label" id="system-pip">Loading…</span>
+        </div>
+    </header>
+
+    <!-- UPLOAD ROW -->
+    <div class="upload-row">
+        <div class="glass-panel upload-panel" id="panel-psd">
+            <div class="panel-label">
+                <span class="step-chip">01</span><span>PSD Templates</span>
+                <span id="psd-count-badge" class="count-badge hidden"></span>
+                <button class="btn-clear-panel" onclick="clearPsds()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>Clear all
+                </button>
+            </div>
+            <div class="upload-zone" id="drop-psd">
+                <input type="file" id="in-psd" accept=".psd" multiple>
+                <div class="upload-content">
+                    <div class="upload-icon-wrap"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+                    <div class="upload-label-text">Drop PSD templates</div>
+                    <div class="upload-sub">Multiple files · drag to reorder</div>
+                </div>
+            </div>
+            <div id="psd-grid" class="thumb-strip"></div>
+            <div id="psd-status" class="panel-status">Waiting…</div>
+        </div>
+
+        <div class="flow-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+
+        <div class="glass-panel upload-panel disabled" id="panel-img">
+            <div class="panel-label">
+                <span class="step-chip">02</span><span>Design Images</span>
+                <span id="img-count-badge" class="count-badge hidden"></span>
+                <button class="btn-clear-panel" onclick="clearImages()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>Clear all
+                </button>
+            </div>
+            <div class="upload-zone" id="drop-img">
+                <input type="file" id="in-img" accept="image/*" multiple disabled>
+                <div class="upload-content">
+                    <div class="upload-icon-wrap"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>
+                    <div class="upload-label-text">Drop design images</div>
+                    <div class="upload-sub">PNG · JPG · WEBP · drag to reorder</div>
+                </div>
+            </div>
+            <div id="img-grid" class="thumb-strip"></div>
+            <div class="panel-status">&nbsp;</div>
+        </div>
+    </div>
+
+    <!-- SLOT PANELS — one per PSD, rendered after preview+SO scan -->
+    <div id="slot-panels" class="slot-panels-wrap hidden"></div>
+
+    <!-- CONTROLS BAR -->
+    <div class="controls-bar glass-panel">
+
+        <!-- Fit -->
+        <div class="control-group">
+            <div class="control-label">Default Fit
+                <span class="tooltip-anchor">
+                    <svg class="help-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <div class="tooltip-card">
+                        <div class="tooltip-item"><strong>Fit</strong><span>Scales to fit entirely inside the frame. May leave gaps at edges.</span></div>
+                        <div class="tooltip-item"><strong>Fill</strong><span>Scales to cover the full frame, cropping overflow. Best for full-bleed artwork.</span></div>
+                        <div class="tooltip-item"><strong>Stretch</strong><span>Forces image to exact frame size. May distort proportions.</span></div>
+                        <div class="tooltip-item" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;margin-top:2px;"><strong style="color:var(--accent-2)">Per-image override</strong><span>Set fit mode per image using the pills under each thumbnail.</span></div>
+                    </div>
+                </span>
+            </div>
+            <div class="segmented-control" id="fit-control">
+                <button class="seg-btn" data-fit="fit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Fit</button>
+                <button class="seg-btn active" data-fit="fill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="2" fill="currentColor" opacity="0.25"/><rect x="2" y="2" width="20" height="20" rx="2"/></svg>Fill</button>
+                <button class="seg-btn" data-fit="stretch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/><rect x="2" y="2" width="20" height="20" rx="2" stroke-dasharray="3 3"/></svg>Stretch</button>
+            </div>
+        </div>
+
+        <div class="ctrl-divider"></div>
+
+        <!-- Format + inline quality when JPEG selected -->
+        <div class="control-group">
+            <div class="control-label">Output Format</div>
+            <div class="format-quality-row">
+                <div class="segmented-control" id="format-control">
+                    <button class="seg-btn active" data-fmt="png">PNG</button>
+                    <button class="seg-btn" data-fmt="jpg">JPEG</button>
+                </div>
+                <div class="inline-quality hidden" id="inline-quality">
+                    <input type="range" id="jpg-quality" min="10" max="100" step="10" value="100" class="quality-slider">
+                    <span class="quality-val" id="quality-val">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="ctrl-spacer"></div>
+
+        <!-- Gear icon — opens settings modal -->
+        <div class="gear-wrap">
+            <button class="btn-gear" id="btn-gear" title="Settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- SETTINGS MODAL (centred, full-screen backdrop) -->
+    <div id="settings-modal" class="settings-modal">
+        <div class="settings-backdrop"></div>
+        <div class="settings-box">
+            <div class="settings-header">
+                <div class="settings-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Settings
+                </div>
+                <button class="settings-close" id="settings-close">×</button>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-label">File Naming</div>
+                <div class="naming-modes">
+                    <label class="radio-label"><input type="radio" name="naming-mode" value="prefix" id="mode-prefix"> Prefix</label>
+                    <label class="radio-label"><input type="radio" name="naming-mode" value="suffix" id="mode-suffix"> Suffix</label>
+                </div>
+                <input type="text" id="naming-value" class="prefix-input" placeholder="Select mode first…" maxlength="40" spellcheck="false" disabled>
+                <div class="prefix-preview" id="naming-preview">output: <em>mockup.png</em></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- GENERATE FOOTER -->
+    <div class="generate-footer glass-panel">
+        <div class="generate-footer-inner">
+            <div class="generate-row">
+                <button id="btn-generate" class="btn-generate" disabled>
+                    <span class="btn-shine"></span>
+                    <span class="btn-content">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                        Start Batch
+                    </span>
+                </button>
+                <button id="btn-stop" class="btn-stop hidden">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                    Stop
+                </button>
+                <button id="btn-run-again" class="btn-run-again hidden">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                    Run Again
+                </button>
+            </div>
+            <div class="footer-meta">
+                <div class="btn-hint" id="btn-hint">Upload PSDs &amp; images to begin</div>
+                <div class="shortcut-hint">⌘ Enter</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-strip glass-panel hidden" id="progress-strip">
+        <div class="progress-meta">
+            <span id="progress-label" class="progress-label">Initialising…</span>
+            <span id="progress-pct" class="progress-pct">0%</span>
+        </div>
+        <div class="progress-track"><div id="progress-bar" class="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- GALLERY -->
+    <div id="gallery-area" class="gallery-area hidden">
+        <div class="gallery-header">
+            <div class="gallery-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                Generated Mockups
+            </div>
+            <div class="gallery-actions">
+                <button class="btn-danger-ghost" onclick="clearMockups()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>Delete All
+                </button>
+                <button id="btn-download-all" class="btn-download-all" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download All
+                </button>
+            </div>
+        </div>
+        <div id="results-container"></div>
+    </div>
+
+</div><!-- /main-layout -->
+
+<iframe id="photopea" src="about:blank"
+  allow="camera; microphone; storage-access"
+  referrerpolicy="no-referrer-when-downgrade"></iframe>
+<script src="app.js"></script>
+<script>
+// ── Fit mode ──────────────────────────────────────────────────
+document.querySelectorAll('.seg-btn[data-fit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.seg-btn[data-fit]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        window.currentFitMode = btn.dataset.fit;
+    });
+});
+window.currentFitMode = 'fill';
+
+// ── Output format + quality ───────────────────────────────────
+const footerQuality = document.getElementById('inline-quality');
+const qualitySlider = document.getElementById('jpg-quality');
+const qualityVal    = document.getElementById('quality-val');
+
+document.querySelectorAll('.seg-btn[data-fmt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.seg-btn[data-fmt]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        footerQuality.classList.toggle('hidden', btn.dataset.fmt !== 'jpg');
+        updateOutputFormat();
+    });
+});
+qualitySlider.addEventListener('input', () => {
+    qualityVal.textContent = qualitySlider.value + '%';
+    updateOutputFormat();
+});
+function updateOutputFormat() {
+    const isJpg = document.querySelector('.seg-btn[data-fmt].active')?.dataset.fmt === 'jpg';
+    window.outputFormat = isJpg
+        ? 'jpg:' + (parseInt(qualitySlider.value) / 100).toFixed(2)
+        : 'png';
+    if (typeof updateNamingPreview === 'function') updateNamingPreview();
+}
+window.outputFormat = 'png';
+
+// ── Settings modal ────────────────────────────────────────────
+const settingsModal = document.getElementById('settings-modal');
+document.getElementById('btn-gear').addEventListener('click', () => settingsModal.classList.add('show'));
+document.getElementById('settings-close').addEventListener('click', () => settingsModal.classList.remove('show'));
+settingsModal.querySelector('.settings-backdrop').addEventListener('click', () => settingsModal.classList.remove('show'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') settingsModal.classList.remove('show'); });
+
+// ── Naming ────────────────────────────────────────────────────
+const namingInput   = document.getElementById('naming-value');
+const namingPreview = document.getElementById('naming-preview');
+const btnGear       = document.getElementById('btn-gear');
+
+document.querySelectorAll('input[name="naming-mode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        namingInput.disabled = false;
+        namingInput.placeholder = radio.value === 'prefix' ? 'e.g. campaign_' : 'e.g. _v2';
+        if (!namingInput.value) namingInput.focus();
+        updateNamingPreview();
+    });
+});
+namingInput.addEventListener('input', updateNamingPreview);
+
+function updateNamingPreview() {
+    const mode = document.querySelector('input[name="naming-mode"]:checked')?.value;
+    const val  = namingInput.value.trim();
+    const ext  = (window.outputFormat || 'png').startsWith('jpg') ? 'jpg' : 'png';
+    let preview = 'mockup';
+    if (val && mode === 'prefix') preview = val + 'mockup';
+    if (val && mode === 'suffix') preview = 'mockup' + val;
+    namingPreview.innerHTML = `output: <em>${preview}.${ext}</em>`;
+    btnGear.classList.toggle('gear-active', !!(val && mode));
+}
+
+// ── Tooltips ──────────────────────────────────────────────────
+document.querySelectorAll('.tooltip-anchor').forEach(anchor => {
+    anchor.addEventListener('click', e => {
+        e.stopPropagation();
+        const card = anchor.querySelector('.tooltip-card');
+        const isOpen = card.classList.contains('show');
+        document.querySelectorAll('.tooltip-card').forEach(t => t.classList.remove('show'));
+        if (!isOpen) card.classList.add('show');
+    });
+});
+document.addEventListener('click', () => document.querySelectorAll('.tooltip-card').forEach(t => t.classList.remove('show')));
+</script>
+</body>
+</html>
