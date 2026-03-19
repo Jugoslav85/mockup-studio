@@ -1,0 +1,6 @@
+{
+  "name": "mockup-studio",
+  "scripts": {
+    "build": "echo no-build"
+  }
+}
