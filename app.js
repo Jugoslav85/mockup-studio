@@ -300,8 +300,12 @@ window.onload = function () {
   updateGenerateButton();
 
   // ── URL param: ?psd=template-id  pre-loads a library template ──
-  const urlPsd = new URLSearchParams(window.location.search).get('psd');
-  if (urlPsd) loadTemplateFromLibrary(urlPsd);
+  // Store now, trigger after Photopea fires its first "done" (it's ready then)
+  window._pendingLibraryPsd = new URLSearchParams(window.location.search).get('psd');
+  if (window._pendingLibraryPsd) {
+    window.history.replaceState({}, '', window.location.pathname);
+    showToast('Template found — waiting for Photopea to load…', 'info');
+  }
 };
 
 // ── Load a template from library.json by id ───────────────────
@@ -1439,6 +1443,12 @@ window.onmessage = function(e) {
   if (e.data === "done" && APP_STATE === "IDLE") {
     setPip("Ready", "ready");
     updateGenerateButton();
+    // If we arrived from the library, load the template now that Photopea is ready
+    if (window._pendingLibraryPsd) {
+      const id = window._pendingLibraryPsd;
+      window._pendingLibraryPsd = null;
+      loadTemplateFromLibrary(id);
+    }
     return;
   }
 
