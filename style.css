@@ -186,6 +186,29 @@ header {
 }
 
 /* System pip */
+.header-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.btn-browse-lib {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-2);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-browse-lib:hover {
+  border-color: var(--accent);
+  background: rgba(126,255,196,0.06);
+  color: var(--accent);
+}
+
 .header-pip {
   display: flex; align-items: center; gap: 7px;
   padding: 7px 14px;

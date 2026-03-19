@@ -1,0 +1,12 @@
+[
+  {
+    "id": "example-poster-frame",
+    "name": "Poster Frame on Wall",
+    "category": "poster",
+    "thumb": "thumbs/example-poster-frame.jpg",
+    "psd": "psds/example-poster-frame.psd",
+    "free": true,
+    "sos": 1,
+    "tags": ["frame", "wall", "interior"]
+  }
+]

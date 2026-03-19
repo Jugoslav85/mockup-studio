@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Admin — Mockup Studio</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #07070d;
+            --surface:   rgba(255,255,255,0.045);
+            --surface-2: rgba(255,255,255,0.07);
+            --border:    rgba(255,255,255,0.09);
+            --border-hi: rgba(255,255,255,0.18);
+            --text:      #f4f1f8;
+            --text-2:    rgba(244,241,248,0.6);
+            --text-3:    rgba(244,241,248,0.32);
+            --accent:    #7effc4;
+            --accent-2:  #a78bfa;
+            --danger:    #ff6b6b;
+            --r:         10px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+            padding: 48px 24px 80px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* ── Page layout ──────────────────────────────────────── */
+        .admin-wrap {
+            width: 100%; max-width: 760px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .admin-header {
+            display: flex; align-items: center;
+            justify-content: space-between; padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .admin-header h1 {
+            font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+        }
+        .admin-header h1 span {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .admin-header a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--text-3); text-decoration: none;
+            letter-spacing: 0.06em;
+            transition: color 0.2s;
+        }
+        .admin-header a:hover { color: var(--accent); }
+
+        /* ── Glass panel ──────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 24px;
+            position: relative; overflow: hidden;
+        }
+        .panel::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+        }
+        .panel-title {
+            font-size: 13px; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--text-2); margin-bottom: 18px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .panel-title .step-dot {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800; color: #07070d;
+            flex-shrink: 0;
+        }
+
+        /* ── Form fields ──────────────────────────────────────── */
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .field { display: flex; flex-direction: column; gap: 7px; }
+        .field label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-3);
+            letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .field input, .field select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-hi);
+            border-radius: 7px;
+            padding: 10px 13px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; letter-spacing: 0.04em;
+            outline: none;
+            transition: all 0.2s;
+            appearance: none;
+        }
+        .field input:focus, .field select:focus {
+            border-color: var(--accent);
+            background: rgba(126,255,196,0.04);
+        }
+        .field input::placeholder { color: var(--text-3); }
+        .field .field-hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-3); letter-spacing: 0.04em;
+        }
+
+        /* ── Toggle (free/pro) ────────────────────────────────── */
+        .toggle-row {
+            display: flex; align-items: center; gap: 12px; margin-top: 4px;
+        }
+        .toggle-row label {
+            font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .toggle {
+            position: relative; width: 40px; height: 22px;
+            flex-shrink: 0;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border-hi);
+            border-radius: 11px; cursor: pointer;
+            transition: all 0.22s;
+        }
+        .toggle-track::after {
+            content: '';
+            position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--text-3);
+            transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .toggle input:checked + .toggle-track {
+            background: rgba(126,255,196,0.15);
+            border-color: var(--accent);
+        }
+        .toggle input:checked + .toggle-track::after {
+            background: var(--accent);
+            transform: translateX(18px);
+        }
+
+        /* ── Thumbnail upload ─────────────────────────────────── */
+        .thumb-upload-zone {
+            border: 1.5px dashed rgba(255,255,255,0.14);
+            border-radius: 8px;
+            height: 180px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.25s;
+            background: rgba(0,0,0,0.15);
+            position: relative; overflow: hidden;
+        }
+        .thumb-upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(126,255,196,0.03);
+        }
+        .thumb-upload-zone input[type=file] {
+            position: absolute; inset: 0;
+            opacity: 0; cursor: pointer;
+        }
+        .thumb-upload-hint {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 8px;
+            pointer-events: none;
+            color: var(--text-3);
+        }
+        .thumb-upload-hint svg { opacity: 0.5; }
+        .thumb-upload-hint span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; letter-spacing: 0.06em;
+        }
+        .thumb-preview {
+            width: 100%; height: 100%;
+            object-fit: cover; display: none;
+        }
+
+        /* ── ID preview ───────────────────────────────────────── */
+        .id-preview {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--accent);
+            background: rgba(126,255,196,0.06);
+            border: 1px solid rgba(126,255,196,0.18);
+            border-radius: 5px;
+            padding: 8px 12px;
+            letter-spacing: 0.04em;
+            min-height: 34px;
+            display: flex; align-items: center;
+        }
+
+        /* ── Generate button ──────────────────────────────────── */
+        .btn-generate {
+            width: 100%; padding: 14px;
+            border: none; border-radius: 9px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #07070d;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px; font-weight: 800; letter-spacing: 0.08em;
+            cursor: pointer; transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(126,255,196,0.25);
+        }
+        .btn-generate:active { transform: translateY(0); }
+
+        /* ── Output box ───────────────────────────────────────── */
+        .output-box {
+            position: relative;
+        }
+        .output-json {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-hi);
+            border-radius: 8px;
+            padding: 16px;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; line-height: 1.7;
+            letter-spacing: 0.03em;
+            resize: vertical; min-height: 200px;
+            outline: none;
+        }
+        .btn-copy {
+            position: absolute; top: 10px; right: 10px;
+            padding: 6px 12px;
+            border: 1px solid var(--border-hi);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.5);
+            color: var(--text-2);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; letter-spacing: 0.06em;
+            cursor: pointer; transition: all 0.18s;
+        }
+        .btn-copy:hover { background: rgba(126,255,196,0.1); color: var(--accent); border-color: rgba(126,255,196,0.3); }
+        .btn-copy.copied { color: var(--accent); border-color: var(--accent); }
+
+        /* ── Instructions ─────────────────────────────────────── */
+        .instructions {
+            background: rgba(126,255,196,0.04);
+            border: 1px solid rgba(126,255,196,0.12);
+            border-radius: 8px;
+            padding: 16px 18px;
+        }
+        .instructions h3 {
+            font-size: 12px; font-weight: 700;
+            color: var(--accent); letter-spacing: 0.06em;
+            text-transform: uppercase; margin-bottom: 10px;
+        }
+        .instructions ol {
+            padding-left: 16px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .instructions li {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--text-2);
+            letter-spacing: 0.03em; line-height: 1.6;
+        }
+        .instructions code {
+            background: rgba(126,255,196,0.1);
+            color: var(--accent);
+            padding: 1px 5px; border-radius: 3px;
+            font-size: 10px;
+        }
+
+        /* ── Divider ──────────────────────────────────────────── */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 4px 0;
+        }
+
+        @media (max-width: 600px) {
+            .field-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="admin-wrap">
+
+    <!-- Header -->
+    <div class="admin-header">
+        <h1>Library <span>Admin</span></h1>
+        <a href="library.html">← Back to Library</a>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>How to add a template</h3>
+        <ol>
+            <li>Fill in the details and pick a thumbnail image below</li>
+            <li>Click <strong>Generate JSON Entry</strong></li>
+            <li>Copy the output and paste it into <code>library.json</code> (inside the <code>[&nbsp;]</code> array)</li>
+            <li>Upload your PSD to <code>/psds/your-id.psd</code> in the GitHub repo</li>
+            <li>Upload the thumbnail to <code>/thumbs/your-id.jpg</code> in the GitHub repo</li>
+            <li>Commit — done</li>
+        </ol>
+    </div>
+
+    <!-- Step 1 — Metadata -->
+    <div class="panel">
+        <div class="panel-title"><span class="step-dot">1</span>Template Details</div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <div class="field">
+                <label>Template Name</label>
+                <input type="text" id="f-name" placeholder="e.g. Poster Frame on Wall" oninput="syncId()">
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label>Category</label>
+                    <select id="f-category">
+                        <option value="poster">Poster</option>
+                        <option value="apparel">Apparel</option>
+                        <option value="packaging">Packaging</option>
+                        <option value="device">Device / Screen</option>
+                        <option value="print">Print</option>
+                        <option value="branding">Branding</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Smart Objects (SOs)</label>
+                    <input type="number" id="f-sos" value="1" min="1" max="20">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Tags (comma separated)</label>
+                <input type="text" id="f-tags" placeholder="e.g. frame, wall, interior, minimal">
+            </div>
+
+            <div class="field">
+                <label>Auto-generated ID</label>
+                <div class="id-preview" id="id-preview">—</div>
+                <span class="field-hint">Generated from the name. Used in the URL and file paths.</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="toggle-row">
+                <label class="toggle">
+                    <input type="checkbox" id="f-free" checked>
+                    <span class="toggle-track"></span>
+                </label>
+                <label for="f-free" id="free-label">Free template</label>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Step 2 — Thumbnail -->
+    <div class="panel">
+        <div class="panel-title"><span class="step-dot">2</span>Thumbnail Preview</div>
+
+        <div class="thumb-upload-zone" id="thumb-zone">
+            <input type="file" id="f-thumb" accept="image/*" onchange="previewThumb(this)">
+            <div class="thumb-upload-hint" id="thumb-hint">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                <span>Click or drop a thumbnail image</span>
+                <span style="font-size:9px;opacity:0.6">JPG · PNG · WEBP — recommended 800×600px</span>
+            </div>
+            <img id="thumb-preview-img" class="thumb-preview" alt="thumbnail preview">
+        </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="btn-generate" onclick="generateEntry()">
+        Generate JSON Entry
+    </button>
+
+    <!-- Output -->
+    <div class="panel output-box" id="output-panel" style="display:none;">
+        <div class="panel-title" style="margin-bottom:14px;">
+            <span class="step-dot">3</span>Copy this into library.json
+        </div>
+        <textarea class="output-json" id="output-json" readonly spellcheck="false"></textarea>
+        <button class="btn-copy" id="btn-copy" onclick="copyJson()">Copy</button>
+    </div>
+
+</div>
+
+<script>
+// ── ID generation ────────────────────────────────────────────
+function toId(name) {
+    return name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 60);
+}
+
+function syncId() {
+    const name = document.getElementById('f-name').value.trim();
+    const id   = toId(name);
+    document.getElementById('id-preview').textContent = id || '—';
+}
+
+// ── Free toggle label ─────────────────────────────────────────
+document.getElementById('f-free').addEventListener('change', function() {
+    document.getElementById('free-label').textContent =
+        this.checked ? 'Free template' : 'Pro template';
+});
+
+// ── Thumbnail preview ────────────────────────────────────────
+function previewThumb(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img  = document.getElementById('thumb-preview-img');
+    img.src = url;
+    img.style.display = 'block';
+    document.getElementById('thumb-hint').style.display = 'none';
+}
+
+// ── Generate ─────────────────────────────────────────────────
+function generateEntry() {
+    const name     = document.getElementById('f-name').value.trim();
+    const category = document.getElementById('f-category').value;
+    const sos      = parseInt(document.getElementById('f-sos').value) || 1;
+    const tagsRaw  = document.getElementById('f-tags').value.trim();
+    const free     = document.getElementById('f-free').checked;
+    const id       = toId(name);
+
+    if (!name || !id) {
+        alert('Please enter a template name first.');
+        return;
+    }
+
+    const tags = tagsRaw
+        ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+        : [];
+
+    const entry = {
+        id,
+        name,
+        category,
+        thumb: `thumbs/${id}.jpg`,
+        psd:   `psds/${id}.psd`,
+        free,
+        sos,
+        ...(tags.length ? { tags } : {})
+    };
+
+    const json = JSON.stringify(entry, null, 2);
+    document.getElementById('output-json').value = json;
+    document.getElementById('output-panel').style.display = 'block';
+    document.getElementById('btn-copy').textContent = 'Copy';
+    document.getElementById('btn-copy').classList.remove('copied');
+
+    // Scroll into view
+    document.getElementById('output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Copy ─────────────────────────────────────────────────────
+function copyJson() {
+    const text = document.getElementById('output-json').value;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy');
+        btn.textContent = '✓ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+</body>
+</html>

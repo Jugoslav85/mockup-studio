@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Library — Mockup Studio</title>
+    <meta name="description" content="Free PSD mockup templates. Click any template to open it instantly in Mockup Studio.">
+    <meta name="theme-color" content="#07070d">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>MS</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ── Tokens (match main app) ───────────────────────────── */
+        :root {
+            --bg:          #07070d;
+            --surface:     rgba(255,255,255,0.045);
+            --border:      rgba(255,255,255,0.09);
+            --border-hi:   rgba(255,255,255,0.18);
+            --text:        #f4f1f8;
+            --text-2:      rgba(244,241,248,0.68);
+            --text-3:      rgba(244,241,248,0.38);
+            --accent:      #7effc4;
+            --accent-2:    #a78bfa;
+            --accent-glow: rgba(126,255,196,0.18);
+            --r:           12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Aurora bg ────────────────────────────────────────── */
+        .aurora-bg {
+            position: fixed; inset: 0; z-index: 0;
+            overflow: hidden; pointer-events: none;
+        }
+        .aurora-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(80px); opacity: 0.4;
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+        .orb-1 { width:600px; height:500px; top:-100px; left:-100px; background:radial-gradient(ellipse,#4f46e5 0%,transparent 70%); animation-duration:22s; }
+        .orb-2 { width:500px; height:500px; top:-60px; right:-80px; background:radial-gradient(ellipse,#0d9488 0%,transparent 70%); animation-duration:28s; animation-delay:-8s; }
+        .orb-3 { width:400px; height:400px; bottom:5%; left:15%; background:radial-gradient(ellipse,#7c3aed 0%,transparent 70%); animation-duration:24s; animation-delay:-14s; }
+        @keyframes drift {
+            0%   { transform:translate(0,0) scale(1); }
+            50%  { transform:translate(30px,-20px) scale(1.05); }
+            100% { transform:translate(-20px,30px) scale(0.96); }
+        }
+        .noise-overlay {
+            position:fixed; inset:0; z-index:1; pointer-events:none;
+            opacity:0.025;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size:256px;
+        }
+
+        /* ── Layout ───────────────────────────────────────────── */
+        .page {
+            position: relative; z-index: 2;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 max(40px, calc((100vw - 1600px)/2 + 40px));
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .lib-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0 24px;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(7,7,13,0.85);
+            backdrop-filter: blur(24px);
+            margin: 0 calc(-1 * max(40px, calc((100vw - 1600px)/2 + 40px)));
+            padding-left: max(40px, calc((100vw - 1600px)/2 + 40px));
+            padding-right: max(40px, calc((100vw - 1600px)/2 + 40px));
+        }
+
+        .lib-header-left {
+            display: flex; align-items: center; gap: 18px;
+        }
+
+        .logo-mark {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; color: #07070d;
+            box-shadow: 0 0 24px rgba(126,255,196,0.2);
+            text-decoration: none; flex-shrink: 0;
+        }
+
+        .lib-brand h1 {
+            font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+        }
+        .lib-brand h1 span {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .lib-brand .sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--text-3); margin-top: 3px; letter-spacing: 0.04em;
+        }
+
+        .btn-open-app {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(126,255,196,0.3);
+            background: rgba(126,255,196,0.06);
+            color: var(--accent);
+            font-family: 'Syne', sans-serif;
+            font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-open-app:hover {
+            background: rgba(126,255,196,0.14);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* ── Hero strip ───────────────────────────────────────── */
+        .lib-hero {
+            padding: 56px 0 48px;
+            border-bottom: 1px solid var(--border);
+        }
+        .lib-hero-inner {
+            display: flex; align-items: flex-end;
+            justify-content: space-between; gap: 32px; flex-wrap: wrap;
+        }
+        .lib-hero h2 {
+            font-size: clamp(32px, 4vw, 52px);
+            font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+        }
+        .lib-hero h2 em {
+            font-style: normal;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .lib-hero p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: var(--text-2);
+            margin-top: 14px; line-height: 1.7; max-width: 520px;
+            letter-spacing: 0.02em;
+        }
+        .lib-stats {
+            display: flex; gap: 32px; flex-shrink: 0;
+        }
+        .lib-stat {
+            text-align: right;
+        }
+        .lib-stat-num {
+            font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+        .lib-stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-3); letter-spacing: 0.1em;
+            text-transform: uppercase; margin-top: 4px;
+        }
+
+        /* ── Filter bar ───────────────────────────────────────── */
+        .lib-filters {
+            display: flex; align-items: center;
+            gap: 10px; padding: 24px 0;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-3);
+            letter-spacing: 0.1em; text-transform: uppercase;
+            margin-right: 4px;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .filter-btn:hover {
+            border-color: var(--border-hi); color: var(--text-2);
+        }
+        .filter-btn.active {
+            border-color: var(--accent);
+            background: rgba(126,255,196,0.08);
+            color: var(--accent);
+        }
+
+        /* ── Search ───────────────────────────────────────────── */
+        .lib-search {
+            margin-left: auto;
+            position: relative;
+        }
+        .lib-search input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px 8px 36px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; letter-spacing: 0.04em;
+            width: 220px;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .lib-search input:focus {
+            border-color: var(--accent);
+            background: rgba(126,255,196,0.04);
+        }
+        .lib-search input::placeholder { color: var(--text-3); }
+        .lib-search svg {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-3); pointer-events: none;
+        }
+
+        /* ── Grid ─────────────────────────────────────────────── */
+        .lib-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            padding-bottom: 80px;
+        }
+
+        /* ── Template card ────────────────────────────────────── */
+        .tmpl-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .tmpl-card:hover {
+            border-color: var(--border-hi);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+        }
+        @keyframes cardIn {
+            from { opacity:0; transform:translateY(12px) scale(0.97); }
+            to   { opacity:1; transform:translateY(0) scale(1); }
+        }
+
+        .tmpl-thumb {
+            width: 100%; aspect-ratio: 4/3;
+            object-fit: cover; display: block;
+            background: rgba(0,0,0,0.4);
+            transition: transform 0.4s;
+        }
+        .tmpl-card:hover .tmpl-thumb { transform: scale(1.04); }
+
+        /* Placeholder when no image */
+        .tmpl-thumb-placeholder {
+            width: 100%; aspect-ratio: 4/3;
+            background: linear-gradient(135deg, rgba(126,255,196,0.04), rgba(167,139,250,0.06));
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Overlay on hover */
+        .tmpl-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(7,7,13,0.7);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0;
+            transition: opacity 0.22s;
+        }
+        .tmpl-card:hover .tmpl-overlay { opacity: 1; }
+
+        .btn-use {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #07070d;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+            cursor: pointer;
+            transform: translateY(8px) scale(0.95);
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 8px 32px rgba(126,255,196,0.3);
+        }
+        .tmpl-card:hover .btn-use {
+            transform: translateY(0) scale(1);
+        }
+
+        .tmpl-info {
+            padding: 14px 16px 16px;
+            border-top: 1px solid var(--border);
+        }
+        .tmpl-name {
+            font-size: 14px; font-weight: 700;
+            letter-spacing: -0.01em;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .tmpl-meta {
+            display: flex; align-items: center; gap: 8px; margin-top: 6px;
+        }
+        .tmpl-sos {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: var(--text-3); letter-spacing: 0.06em;
+        }
+        .tmpl-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px; letter-spacing: 0.08em;
+            padding: 2px 7px; border-radius: 10px;
+            text-transform: uppercase;
+        }
+        .tmpl-badge.free {
+            background: rgba(126,255,196,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(126,255,196,0.25);
+        }
+        .tmpl-badge.pro {
+            background: rgba(167,139,250,0.12);
+            color: var(--accent-2);
+            border: 1px solid rgba(167,139,250,0.25);
+        }
+
+        /* ── Empty state ──────────────────────────────────────── */
+        .lib-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-3);
+        }
+        .lib-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+        .lib-empty h3 {
+            font-size: 18px; font-weight: 700; color: var(--text-2); margin-bottom: 8px;
+        }
+        .lib-empty p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; letter-spacing: 0.04em;
+        }
+
+        /* ── Loading skeleton ─────────────────────────────────── */
+        .skeleton {
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.04) 0%,
+                rgba(255,255,255,0.08) 50%,
+                rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s ease-in-out infinite;
+            border-radius: var(--r);
+        }
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skel-card { height: 260px; }
+
+        /* ── Footer ───────────────────────────────────────────── */
+        .lib-footer {
+            border-top: 1px solid var(--border);
+            padding: 28px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .lib-footer p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--text-3); letter-spacing: 0.04em;
+        }
+        .lib-footer a {
+            color: var(--accent); text-decoration: none;
+        }
+
+        /* ── Responsive ───────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .page { padding: 0 24px; }
+            .lib-header { margin: 0 -24px; padding-left: 24px; padding-right: 24px; }
+            .lib-stats { display: none; }
+        }
+        @media (max-width: 600px) {
+            .page { padding: 0 16px; }
+            .lib-header { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+            .lib-hero { padding: 36px 0 32px; }
+            .lib-search { margin-left: 0; width: 100%; }
+            .lib-search input { width: 100%; }
+            .lib-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+            .btn-open-app span { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="aurora-bg">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+</div>
+<div class="noise-overlay"></div>
+
+<!-- HEADER -->
+<header class="lib-header">
+    <div class="lib-header-left">
+        <a class="logo-mark" href="index.html">MS</a>
+        <div class="lib-brand">
+            <h1>Mockup <span>Studio</span></h1>
+            <p class="sub">Template Library</p>
+        </div>
+    </div>
+    <a href="index.html" class="btn-open-app">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5,3 19,12 5,21"/></svg>
+        <span>Open Generator</span>
+    </a>
+</header>
+
+<div class="page">
+
+    <!-- HERO -->
+    <section class="lib-hero">
+        <div class="lib-hero-inner">
+            <div>
+                <h2>Free mockup<br>templates for <em>everyone</em></h2>
+                <p>Click any template to open it instantly in the generator. Upload your designs and get polished mockups in seconds.</p>
+            </div>
+            <div class="lib-stats">
+                <div class="lib-stat">
+                    <div class="lib-stat-num" id="stat-total">—</div>
+                    <div class="lib-stat-label">Templates</div>
+                </div>
+                <div class="lib-stat">
+                    <div class="lib-stat-num" id="stat-free">—</div>
+                    <div class="lib-stat-label">Free</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTERS + SEARCH -->
+    <div class="lib-filters">
+        <span class="filter-label">Filter</span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="free">Free</button>
+        <div class="lib-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="lib-search-input" placeholder="Search templates…" autocomplete="off">
+        </div>
+    </div>
+
+    <!-- GRID -->
+    <div class="lib-grid" id="lib-grid">
+        <!-- Skeleton loaders -->
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="lib-footer">
+        <p>© Mockup Studio · <a href="index.html">Open Generator</a></p>
+        <p id="lib-count-label"></p>
+    </footer>
+
+</div>
+
+<script>
+let allTemplates = [];
+let activeFilter = 'all';
+let searchQuery  = '';
+
+// ── Load library.json ────────────────────────────────────────
+async function loadLibrary() {
+    try {
+        const res  = await fetch('library.json?v=' + Date.now());
+        allTemplates = await res.json();
+        updateStats();
+        renderGrid();
+    } catch(e) {
+        document.getElementById('lib-grid').innerHTML =
+            `<div class="lib-empty">
+                <div class="lib-empty-icon">⚠️</div>
+                <h3>Could not load library</h3>
+                <p>library.json not found or invalid.</p>
+            </div>`;
+    }
+}
+
+// ── Stats ────────────────────────────────────────────────────
+function updateStats() {
+    document.getElementById('stat-total').textContent = allTemplates.length;
+    document.getElementById('stat-free').textContent  = allTemplates.filter(t => t.free).length;
+}
+
+// ── Filter + search ──────────────────────────────────────────
+function getFiltered() {
+    return allTemplates.filter(t => {
+        const matchFilter = activeFilter === 'all' ||
+                            (activeFilter === 'free' && t.free) ||
+                            t.category === activeFilter;
+        const matchSearch = !searchQuery ||
+                            t.name.toLowerCase().includes(searchQuery) ||
+                            (t.tags || []).some(tag => tag.includes(searchQuery));
+        return matchFilter && matchSearch;
+    });
+}
+
+// ── Render ───────────────────────────────────────────────────
+function renderGrid() {
+    const grid = document.getElementById('lib-grid');
+    const items = getFiltered();
+
+    document.getElementById('lib-count-label').textContent =
+        `${items.length} template${items.length !== 1 ? 's' : ''} shown`;
+
+    if (!items.length) {
+        grid.innerHTML = `<div class="lib-empty">
+            <div class="lib-empty-icon">🔍</div>
+            <h3>No templates found</h3>
+            <p>Try a different search or filter.</p>
+        </div>`;
+        return;
+    }
+
+    grid.innerHTML = '';
+    items.forEach((t, i) => {
+        const card = document.createElement('div');
+        card.className = 'tmpl-card';
+        card.style.animationDelay = (i * 40) + 'ms';
+
+        const thumbHtml = t.thumb
+            ? `<img class="tmpl-thumb" src="${t.thumb}" alt="${t.name}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=tmpl-thumb-placeholder>NO PREVIEW</div>'">`
+            : `<div class="tmpl-thumb-placeholder">NO PREVIEW</div>`;
+
+        const sosLabel = t.sos > 1 ? `${t.sos} smart objects` : '1 smart object';
+        const badge    = t.free
+            ? `<span class="tmpl-badge free">Free</span>`
+            : `<span class="tmpl-badge pro">Pro</span>`;
+
+        card.innerHTML = `
+            <div style="overflow:hidden;position:relative;">
+                ${thumbHtml}
+                <div class="tmpl-overlay">
+                    <button class="btn-use">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                        Use Template
+                    </button>
+                </div>
+            </div>
+            <div class="tmpl-info">
+                <div class="tmpl-name">${t.name}</div>
+                <div class="tmpl-meta">
+                    <span class="tmpl-sos">${sosLabel}</span>
+                    ${badge}
+                </div>
+            </div>`;
+
+        card.addEventListener('click', () => useTemplate(t));
+        grid.appendChild(card);
+    });
+}
+
+// ── Use template — redirect to generator with ?psd=id ────────
+function useTemplate(t) {
+    window.location.href = `index.html?psd=${encodeURIComponent(t.id)}`;
+}
+
+// ── Filter buttons ───────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        renderGrid();
+    });
+});
+
+// ── Search ───────────────────────────────────────────────────
+document.getElementById('lib-search-input').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase().trim();
+    renderGrid();
+});
+
+// ── Init ─────────────────────────────────────────────────────
+loadLibrary();
+</script>
+</body>
+</html>
