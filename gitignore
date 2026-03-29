@@ -1,0 +1,12 @@
+# Binary assets — host on Cloudflare R2, not in repo
+*.psd
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.zip
+
+# Node
+node_modules/
+.wrangler/
