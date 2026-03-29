@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Library — Mockup Studio</title>
-    <meta name="description" content="Free PSD mockup templates. Click any template to open it instantly in Mockup Studio.">
-    <meta name="theme-color" content="#07070d">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>MS</text></svg>">
+    <title>Template Library — Scaylr</title>
+    <meta name="description" content="Free PSD mockup templates for Scaylr. Click any template to open it instantly.">
+    <meta name="theme-color" content="#0d0d18">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>S</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
     <style>
         /* ── Tokens (match main app) ───────────────────────────── */
         :root {
-            --bg:          #07070d;
-            --surface:     rgba(255,255,255,0.045);
-            --border:      rgba(255,255,255,0.09);
-            --border-hi:   rgba(255,255,255,0.18);
-            --text:        #f4f1f8;
-            --text-2:      rgba(244,241,248,0.68);
-            --text-3:      rgba(244,241,248,0.38);
+            --bg:          #0d0d18;
+            --surface:     rgba(255,255,255,0.065);
+            --border:      rgba(255,255,255,0.13);
+            --border-hi:   rgba(255,255,255,0.22);
+            --text:        #f0eeff;
+            --text-2:      rgba(240,238,255,0.82);
+            --text-3:      rgba(240,238,255,0.55);
             --accent:      #7effc4;
             --accent-2:    #a78bfa;
             --accent-glow: rgba(126,255,196,0.18);
@@ -92,7 +94,7 @@
             width: 44px; height: 44px; border-radius: 12px;
             background: linear-gradient(135deg, var(--accent-2), var(--accent));
             display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: 800; color: #07070d;
+            font-size: 14px; font-weight: 800; color: #0d0d18;
             box-shadow: 0 0 24px rgba(126,255,196,0.2);
             text-decoration: none; flex-shrink: 0;
         }
@@ -299,7 +301,7 @@
             border-radius: 8px;
             border: none;
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: #07070d;
+            color: #0d0d18;
             font-family: 'Syne', sans-serif;
             font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
             cursor: pointer;
@@ -419,7 +421,7 @@
 <!-- HEADER -->
 <header class="lib-header">
     <div class="lib-header-left">
-        <a class="logo-mark" href="index.html">MS</a>
+        <a class="logo-mark" href="index.html">S</a>
         <div class="lib-brand">
             <h1>Mockup <span>Studio</span></h1>
             <p class="sub">Template Library</p>
@@ -477,7 +479,7 @@
 
     <!-- FOOTER -->
     <footer class="lib-footer">
-        <p>© Mockup Studio · <a href="index.html">Open Generator</a></p>
+        <p>© Scaylr · <a href="index.html">Open Generator</a></p>
         <p id="lib-count-label"></p>
     </footer>
 
@@ -494,6 +496,7 @@ async function loadLibrary() {
         const res  = await fetch('library.json?v=' + Date.now());
         allTemplates = await res.json();
         updateStats();
+        buildFilters();
         renderGrid();
     } catch(e) {
         document.getElementById('lib-grid').innerHTML =
@@ -509,6 +512,29 @@ async function loadLibrary() {
 function updateStats() {
     document.getElementById('stat-total').textContent = allTemplates.length;
     document.getElementById('stat-free').textContent  = allTemplates.filter(t => t.free).length;
+}
+
+// ── Build filter buttons dynamically from library data ────────
+function buildFilters() {
+    const categories = [...new Set(allTemplates.map(t => t.category).filter(Boolean))].sort();
+    const bar = document.querySelector('.lib-filters');
+    // Remove any existing dynamic category buttons (keep All + Free)
+    bar.querySelectorAll('.filter-btn[data-filter]:not([data-filter="all"]):not([data-filter="free"])').forEach(b => b.remove());
+    // Insert after Free button
+    const freeBtn = bar.querySelector('[data-filter="free"]');
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.filter = cat;
+        btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+        freeBtn.after(btn);
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = cat;
+            renderGrid();
+        });
+    });
 }
 
 // ── Filter + search ──────────────────────────────────────────
@@ -533,10 +559,12 @@ function renderGrid() {
         `${items.length} template${items.length !== 1 ? 's' : ''} shown`;
 
     if (!items.length) {
+        const isCategoryFilter = activeFilter !== 'all' && activeFilter !== 'free';
+        const catLabel = activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1);
         grid.innerHTML = `<div class="lib-empty">
-            <div class="lib-empty-icon">🔍</div>
-            <h3>No templates found</h3>
-            <p>Try a different search or filter.</p>
+            <div class="lib-empty-icon">${searchQuery ? '🔍' : '🖼️'}</div>
+            <h3>${searchQuery ? 'No templates found' : isCategoryFilter ? `No ${catLabel} templates yet` : 'No free templates yet'}</h3>
+            <p>${searchQuery ? 'Try a different search term or clear the filter.' : isCategoryFilter ? `${catLabel} templates are coming soon — check back shortly.` : 'More free templates are being added regularly.'}</p>
         </div>`;
         return;
     }
@@ -575,13 +603,18 @@ function renderGrid() {
             </div>`;
 
         card.addEventListener('click', () => useTemplate(t));
+        card.querySelector('.btn-use').addEventListener('click', e => {
+            e.stopPropagation();
+            useTemplate(t);
+        });
         grid.appendChild(card);
     });
 }
 
 // ── Use template — redirect to generator with ?psd=id ────────
 function useTemplate(t) {
-    window.location.href = `index.html?psd=${encodeURIComponent(t.id)}`;
+    sessionStorage.setItem('pendingTemplate', JSON.stringify(t));
+    window.location.href = 'index.html';
 }
 
 // ── Filter buttons ───────────────────────────────────────────

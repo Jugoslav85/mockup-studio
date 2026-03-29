@@ -3,14 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mockup Studio — Batch PSD Mockup Generator</title>
+    <title>Scaylr — Batch PSD Mockup Generator</title>
     <meta name="description" content="Generate product mockups in bulk. Upload your PSD templates and designs, get polished mockups in seconds. No Photoshop needed.">
     <meta name="theme-color" content="#07070d">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>MS</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23a78bfa'/><stop offset='1' stop-color='%237effc4'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text y='.9em' x='50%' text-anchor='middle' font-size='52' font-family='system-ui,sans-serif' font-weight='800' fill='%2307070d'>S</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+
+    <style>
+      /* ── Panel collapse during batch processing ── */
+      .upload-row,
+      .slot-panels-wrap,
+      .controls-bar {
+        transition: max-height 0.45s ease, opacity 0.35s ease, margin 0.35s ease;
+        max-height: 3000px;
+        opacity: 1;
+        overflow: hidden;
+      }
+      .upload-row.panels-collapsed,
+      .slot-panels-wrap.panels-collapsed,
+      .controls-bar.panels-collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        pointer-events: none;
+      }
+
+      /* ── Lazy gallery thumbnail placeholder ── */
+      .mockup-thumb-lazy:not([src]) {
+        display: block;
+        width: 100%;
+        min-height: 130px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+        background-size: 200% 100%;
+        animation: thumb-shimmer 1.4s ease-in-out infinite;
+        border-radius: 6px;
+      }
+      @keyframes thumb-shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      /* ── Completion footer ── */
+      .completion-footer {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 8999;
+        background: rgba(12,12,24,0.96);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(126,255,196,0.25);
+        box-shadow: 0 -4px 32px rgba(0,0,0,0.5);
+        padding: 16px 32px;
+        animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both;
+      }
+      .completion-footer.hidden { display: none; }
+      @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+      }
+      .completion-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .completion-msg {
+        display: flex; align-items: center; gap: 10px;
+        font-family: 'Syne', sans-serif;
+        font-size: 15px; font-weight: 700;
+        color: #7effc4;
+      }
+      .completion-actions {
+        display: flex; gap: 12px; align-items: center;
+      }
+      .completion-dl-btn {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #7effc4, #a78bfa);
+        border: none; border-radius: 10px;
+        color: #07070d;
+        font-family: 'Syne', sans-serif;
+        font-size: 14px; font-weight: 800;
+        cursor: pointer;
+        transition: all 0.22s;
+        white-space: nowrap;
+      }
+      .completion-dl-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(126,255,196,0.35); }
+      .completion-dl-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+      .completion-new-btn { display: none; }
+
+      /* ── Stay-on-tab notice bar ── */
+      .stay-notice {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        background: rgba(167,139,250,0.08);
+        border: 1px solid rgba(167,139,250,0.2);
+        border-radius: 10px;
+        font-size: 12.5px;
+        color: rgba(255,255,255,0.7);
+        font-family: 'Syne', sans-serif;
+        margin-bottom: 8px;
+        animation: fadeDown 0.4s ease both;
+      }
+      .stay-notice.hidden { display: none; }
+      .stay-notice-why {
+        display: inline-flex; align-items: center; gap: 5px;
+        margin-left: auto;
+        background: rgba(167,139,250,0.15);
+        border: 1px solid rgba(167,139,250,0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 11px; font-weight: 700;
+        color: #a78bfa;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: 'Syne', sans-serif;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .stay-notice-why:hover { background: rgba(167,139,250,0.25); }
+
+      /* ── Run Again button in completion footer ── */
+      .completion-again-btn {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 22px;
+        border: 1px solid rgba(167,139,250,0.3);
+        border-radius: 10px;
+        background: rgba(167,139,250,0.08);
+        color: #a78bfa;
+        font-family: 'Syne', sans-serif;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer;
+        transition: all 0.22s;
+        white-space: nowrap;
+      }
+      .completion-again-btn:hover { background: rgba(167,139,250,0.18); border-color: rgba(167,139,250,0.6); transform: translateY(-1px); }
+
+      /* ── Diagnostic log panel ── */
+      .diag-panel {
+        position: fixed;
+        bottom: 0; right: 20px;
+        width: 420px;
+        max-height: 320px;
+        background: rgba(8,8,18,0.97);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        z-index: 9500;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 -4px 32px rgba(0,0,0,0.5);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+      }
+      .diag-panel.hidden { display: none !important; }
+      .diag-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        cursor: pointer;
+        flex-shrink: 0;
+        user-select: none;
+      }
+      .diag-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.7);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .diag-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        flex-shrink: 0;
+      }
+      .diag-dot.active { background: #7effc4; box-shadow: 0 0 6px #7effc4; animation: pulse 2s infinite; }
+      .diag-dot.error  { background: #ff6b6b; box-shadow: 0 0 6px #ff6b6b; }
+      .diag-controls { display: flex; gap: 6px; align-items: center; }
+      .diag-clear-btn, .diag-close-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 4px;
+        color: rgba(255,255,255,0.4);
+        font-size: 11px;
+        padding: 2px 8px;
+        cursor: pointer;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .diag-clear-btn:hover, .diag-close-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.35); }
+      .diag-body {
+        overflow-y: auto;
+        flex: 1;
+        padding: 8px 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.1) transparent;
+      }
+      .diag-line {
+        display: flex;
+        gap: 10px;
+        padding: 2px 14px;
+        line-height: 1.6;
+        color: rgba(255,255,255,0.55);
+        font-size: 11px;
+      }
+      .diag-line:hover { background: rgba(255,255,255,0.03); }
+      .diag-time { color: rgba(255,255,255,0.25); flex-shrink: 0; }
+      .diag-line.info  .diag-msg { color: rgba(255,255,255,0.65); }
+      .diag-line.ok    .diag-msg { color: #7effc4; }
+      .diag-line.warn  .diag-msg { color: #fb923c; }
+      .diag-line.error .diag-msg { color: #ff6b6b; }
+      .diag-line.dim   .diag-msg { color: rgba(255,255,255,0.3); }
+
+      /* ── Disabled state for controls during batch ── */
+      .drop-disabled { opacity: 0.4; pointer-events: none; }
+      .seg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+      .btn-clear-panel:disabled { opacity: 0.3; cursor: not-allowed; }
+      #btn-ctrl-autofill:disabled,
+      #btn-ctrl-add:disabled { opacity: 0.35; cursor: not-allowed; }
+      #jpg-quality:disabled { opacity: 0.35; cursor: not-allowed; }
+    </style>
 </head>
 <body>
 <div class="aurora-bg">
@@ -23,13 +250,17 @@
 
     <header>
         <div class="header-left">
-            <div class="logo-mark">MS</div>
+            <div class="logo-mark">S</div>
             <div class="header-text">
-                <h1>Mockup <span>Studio</span></h1>
-                <p class="tagline">Grouped batch generator</p>
+                <h1>Scaylr<span>.</span></h1>
+                <p class="tagline">Upload PSDs + designs → get mockups</p>
             </div>
         </div>
         <div class="header-right">
+            <a href="landing.html" class="btn-browse-lib" style="margin-right:2px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+                Home
+            </a>
             <a href="library.html" class="btn-browse-lib">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
                 Templates
@@ -38,6 +269,12 @@
                 <span class="pip-dot"></span>
                 <span class="pip-label" id="system-pip">Loading…</span>
             </div>
+            <div id="tier-badge" class="tier-badge tier-free" title="Free plan">Free</div>
+            <button class="btn-theme-toggle" id="btn-theme-toggle" title="Toggle light/dark mode">
+                <svg id="theme-icon-dark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg id="theme-icon-light" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+
         </div>
     </header>
 
@@ -47,7 +284,7 @@
             <div class="panel-label">
                 <span class="step-chip">01</span><span>PSD Templates</span>
                 <span id="psd-count-badge" class="count-badge hidden"></span>
-                <button class="btn-clear-panel" onclick="clearPsds()">
+                <button class="btn-clear-panel" data-confirm="clearPsds" title="Clear all PSDs">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>Clear all
                 </button>
             </div>
@@ -63,18 +300,16 @@
             <div id="psd-status" class="panel-status">Waiting…</div>
         </div>
 
-        <div class="flow-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
-
-        <div class="glass-panel upload-panel disabled" id="panel-img">
+        <div class="glass-panel upload-panel" id="panel-img">
             <div class="panel-label">
                 <span class="step-chip">02</span><span>Design Images</span>
                 <span id="img-count-badge" class="count-badge hidden"></span>
-                <button class="btn-clear-panel" onclick="clearImages()">
+                <button class="btn-clear-panel" data-confirm="clearImages" title="Clear all images">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>Clear all
                 </button>
             </div>
             <div class="upload-zone" id="drop-img">
-                <input type="file" id="in-img" accept="image/*" multiple disabled>
+                <input type="file" id="in-img" accept="image/*" multiple>
                 <div class="upload-content">
                     <div class="upload-icon-wrap"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg></div>
                     <div class="upload-label-text">Drop design images</div>
@@ -86,15 +321,41 @@
         </div>
     </div>
 
-    <!-- SLOT PANELS — one per PSD, rendered after preview+SO scan -->
-    <div id="slot-panels" class="slot-panels-wrap hidden"></div>
-
     <!-- CONTROLS BAR -->
     <div class="controls-bar glass-panel">
 
-        <!-- Fit -->
+        <!-- Step 03: Assign (left) -->
+        <div class="ctrl-assign-group">
+            <div class="ctrl-step-label">
+                <span class="ctrl-step-chip">03</span>
+                <span class="ctrl-step-text">Assign images to templates</span>
+                <span class="tooltip-anchor">
+                    <svg class="help-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <div class="tooltip-card">
+                        <div class="tooltip-item"><strong>What is an input?</strong><span>Each column = one set of mockups. One image per slot, one output per template. Add more inputs to generate variations side by side.</span></div>
+                        <div class="tooltip-item"><strong>⚡ Auto-fill</strong><span>Distributes your uploaded images across all templates automatically. For single-slot templates, one image per column. For multi-slot templates, images are grouped — e.g. images 1–3 fill Input 1, images 4–6 fill Input 2.</span></div>
+                        <div class="tooltip-item"><strong>＋ Add input</strong><span>Creates a new empty column so you can assign a different set of images to the same templates — useful for comparing variations or processing multiple clients.</span></div>
+                        <div class="tooltip-item" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;margin-top:2px;"><strong style="color:var(--accent-2)">Drag &amp; drop</strong><span>Drag any image thumbnail directly into a slot. Or click an empty slot to pick a file from your computer.</span></div>
+                    </div>
+                </span>
+            </div>
+            <div class="ctrl-input-actions">
+                <button class="btn-ctrl-autofill" id="btn-ctrl-autofill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/></svg>
+                    Auto-fill <span class="ctrl-recommended">recommended</span>
+                </button>
+                <button class="btn-ctrl-add" id="btn-ctrl-add">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add input
+                </button>
+            </div>
+        </div>
+
+        <div class="ctrl-divider"></div>
+
+        <!-- Image Fit -->
         <div class="control-group">
-            <div class="control-label">Default Fit
+            <div class="control-label">Image Fit
                 <span class="tooltip-anchor">
                     <svg class="help-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                     <div class="tooltip-card">
@@ -114,57 +375,25 @@
 
         <div class="ctrl-divider"></div>
 
-        <!-- Format + inline quality when JPEG selected -->
+        <!-- Output Format -->
         <div class="control-group">
             <div class="control-label">Output Format</div>
             <div class="format-quality-row">
                 <div class="segmented-control" id="format-control">
-                    <button class="seg-btn active" data-fmt="png">PNG</button>
-                    <button class="seg-btn" data-fmt="jpg">JPEG</button>
+                    <button class="seg-btn" data-fmt="png">PNG</button>
+                    <button class="seg-btn active" data-fmt="jpg">JPEG</button>
                 </div>
-                <div class="inline-quality hidden" id="inline-quality">
-                    <input type="range" id="jpg-quality" min="10" max="100" step="10" value="100" class="quality-slider">
-                    <span class="quality-val" id="quality-val">100%</span>
+                <div class="inline-quality" id="inline-quality">
+                    <input type="range" id="jpg-quality" min="10" max="100" step="10" value="90" class="quality-slider" style="width:90px;">
+                    <span class="quality-val" id="quality-val">90%</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Spacer -->
-        <div class="ctrl-spacer"></div>
-
-        <!-- Gear icon — opens settings modal -->
-        <div class="gear-wrap">
-            <button class="btn-gear" id="btn-gear" title="Settings">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
         </div>
 
     </div>
 
-    <!-- SETTINGS MODAL (centred, full-screen backdrop) -->
-    <div id="settings-modal" class="settings-modal">
-        <div class="settings-backdrop"></div>
-        <div class="settings-box">
-            <div class="settings-header">
-                <div class="settings-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Settings
-                </div>
-                <button class="settings-close" id="settings-close">×</button>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-section-label">File Naming</div>
-                <div class="naming-modes">
-                    <label class="radio-label"><input type="radio" name="naming-mode" value="prefix" id="mode-prefix"> Prefix</label>
-                    <label class="radio-label"><input type="radio" name="naming-mode" value="suffix" id="mode-suffix"> Suffix</label>
-                </div>
-                <input type="text" id="naming-value" class="prefix-input" placeholder="Select mode first…" maxlength="40" spellcheck="false" disabled>
-                <div class="prefix-preview" id="naming-preview">output: <em>mockup.png</em></div>
-            </div>
-
-        </div>
-    </div>
+    <!-- SLOT PANELS — one per PSD, rendered after preview+SO scan -->
+    <div id="slot-panels" class="slot-panels-wrap hidden"></div>
 
     <!-- GENERATE FOOTER -->
     <div class="generate-footer glass-panel">
@@ -188,9 +417,19 @@
             </div>
             <div class="footer-meta">
                 <div class="btn-hint" id="btn-hint">Upload PSDs &amp; images to begin</div>
-                <div class="shortcut-hint">⌘ Enter</div>
+
             </div>
         </div>
+    </div>
+
+    <!-- Stay-on-tab notice — shown at batch start, hidden when done -->
+    <div id="stay-notice" class="stay-notice hidden">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>Keep this tab open and active while processing — switching away will pause the batch.</span>
+      <button class="stay-notice-why" onclick="document.getElementById('why-modal').style.display='flex'">
+        Learn why
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
     </div>
 
     <!-- PROGRESS -->
@@ -207,7 +446,7 @@
         <div class="gallery-header">
             <div class="gallery-title">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                Generated Mockups
+                Generated Mockups <span id="gallery-count" class="gallery-count"></span>
             </div>
             <div class="gallery-actions">
                 <button class="btn-danger-ghost" onclick="clearMockups()">
@@ -222,7 +461,69 @@
         <div id="results-container"></div>
     </div>
 
+    <!-- DIAGNOSTIC LOG PANEL -->
+    <div id="diag-panel" class="diag-panel hidden">
+      <div class="diag-header" id="diag-toggle">
+        <div class="diag-title">
+          <span class="diag-dot" id="diag-dot"></span>
+          Batch Log
+        </div>
+        <div class="diag-controls">
+          <button class="diag-clear-btn" onclick="window.diagClear()">Clear</button>
+          <button class="diag-close-btn" onclick="document.getElementById('diag-panel').classList.add('hidden')">✕</button>
+        </div>
+      </div>
+      <div class="diag-body" id="diag-body"></div>
+    </div>
+
 </div><!-- /main-layout -->
+
+
+
+<!-- "Why stay on tab" explanation modal -->
+<div id="why-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;"
+  onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#12121f;border:1px solid rgba(255,255,255,0.12);border-radius:16px;
+    padding:36px;max-width:480px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,0.6);position:relative;">
+    <button onclick="document.getElementById('why-modal').style.display='none'"
+      style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.06);border:none;
+      border-radius:6px;width:28px;height:28px;cursor:pointer;color:#fff;font-size:14px;
+      display:flex;align-items:center;justify-content:center;">✕</button>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;
+      background:linear-gradient(90deg,#7effc4,#a78bfa);-webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;background-clip:text;">Why stay on this tab?</div>
+    <div style="font-size:13.5px;line-height:1.75;color:rgba(255,255,255,0.75);font-family:'Syne',sans-serif;">
+      <p style="margin:0 0 14px">Scaylr processes your designs using a rendering engine that runs entirely inside your browser tab. This engine needs to actively open files, inject your designs, and export each mockup — one at a time.</p>
+      <p style="margin:0 0 14px">When you switch to a different tab, browsers automatically slow down or suspend background tabs to save resources. This causes the rendering engine to stall, which is why we automatically pause the batch when you leave.</p>
+      <p style="margin:0 0 14px">Everything resumes the moment you come back — no work is lost.</p>
+      <div style="background:rgba(126,255,196,0.07);border:1px solid rgba(126,255,196,0.2);
+        border-radius:10px;padding:14px 16px;font-size:12.5px;color:rgba(255,255,255,0.6);">
+        💡 <strong style="color:rgba(126,255,196,0.9)">Tip:</strong> You can leave the tab open in a separate window while you work in another — as long as the tab itself stays visible, processing continues at full speed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Completion footer — shown after batch finishes -->
+<div id="completion-footer" class="completion-footer hidden">
+  <div class="completion-inner">
+    <div class="completion-msg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20,6 9,17 4,12"/></svg>
+      <span id="completion-text">Batch complete</span>
+    </div>
+    <div class="completion-actions">
+      <button class="completion-dl-btn" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download All
+      </button>
+      <button class="completion-again-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Run Again
+      </button>
+    </div>
+  </div>
+</div>
 
 <iframe id="photopea" src="about:blank"
   allow="camera; microphone; storage-access"
@@ -261,54 +562,125 @@ function updateOutputFormat() {
     window.outputFormat = isJpg
         ? 'jpg:' + (parseInt(qualitySlider.value) / 100).toFixed(2)
         : 'png';
-    if (typeof updateNamingPreview === 'function') updateNamingPreview();
 }
-window.outputFormat = 'png';
+window.outputFormat = 'jpg:0.90';
 
-// ── Settings modal ────────────────────────────────────────────
-const settingsModal = document.getElementById('settings-modal');
-document.getElementById('btn-gear').addEventListener('click', () => settingsModal.classList.add('show'));
-document.getElementById('settings-close').addEventListener('click', () => settingsModal.classList.remove('show'));
-settingsModal.querySelector('.settings-backdrop').addEventListener('click', () => settingsModal.classList.remove('show'));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') settingsModal.classList.remove('show'); });
-
-// ── Naming ────────────────────────────────────────────────────
-const namingInput   = document.getElementById('naming-value');
-const namingPreview = document.getElementById('naming-preview');
-const btnGear       = document.getElementById('btn-gear');
-
-document.querySelectorAll('input[name="naming-mode"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-        namingInput.disabled = false;
-        namingInput.placeholder = radio.value === 'prefix' ? 'e.g. campaign_' : 'e.g. _v2';
-        if (!namingInput.value) namingInput.focus();
-        updateNamingPreview();
-    });
-});
-namingInput.addEventListener('input', updateNamingPreview);
-
-function updateNamingPreview() {
-    const mode = document.querySelector('input[name="naming-mode"]:checked')?.value;
-    const val  = namingInput.value.trim();
-    const ext  = (window.outputFormat || 'png').startsWith('jpg') ? 'jpg' : 'png';
-    let preview = 'mockup';
-    if (val && mode === 'prefix') preview = val + 'mockup';
-    if (val && mode === 'suffix') preview = 'mockup' + val;
-    namingPreview.innerHTML = `output: <em>${preview}.${ext}</em>`;
-    btnGear.classList.toggle('gear-active', !!(val && mode));
-}
-
-// ── Tooltips ──────────────────────────────────────────────────
-document.querySelectorAll('.tooltip-anchor').forEach(anchor => {
-    anchor.addEventListener('click', e => {
+// ── Clear-all confirm (Fix #2) ────────────────────────────────
+document.querySelectorAll('.btn-clear-panel[data-confirm]').forEach(btn => {
+    btn.addEventListener('click', e => {
         e.stopPropagation();
-        const card = anchor.querySelector('.tooltip-card');
-        const isOpen = card.classList.contains('show');
-        document.querySelectorAll('.tooltip-card').forEach(t => t.classList.remove('show'));
-        if (!isOpen) card.classList.add('show');
+        const fn = btn.dataset.confirm;
+        const label = fn === 'clearPsds' ? 'PSDs' : 'images';
+        if (typeof showConfirm === 'function') {
+            showConfirm(
+                `Clear all ${label}?`,
+                `This will remove all uploaded ${label}. This cannot be undone.`,
+                'Clear all',
+                () => { if (typeof window[fn] === 'function') window[fn](); }
+            );
+        } else {
+            if (typeof window[fn] === 'function') window[fn]();
+        }
     });
 });
-document.addEventListener('click', () => document.querySelectorAll('.tooltip-card').forEach(t => t.classList.remove('show')));
+
+// ── Theme toggle ─────────────────────────────────────────────
+(function() {
+    const html   = document.documentElement;
+    const btn    = document.getElementById('btn-theme-toggle');
+    const iconDk = document.getElementById('theme-icon-dark');
+    const iconLt = document.getElementById('theme-icon-light');
+
+    function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem('ms_theme', theme);
+        if (theme === 'light') {
+            if (iconDk) iconDk.style.display = 'none';
+            if (iconLt) iconLt.style.display = '';
+            if (btn) btn.title = 'Switch to dark mode';
+        } else {
+            if (iconDk) iconDk.style.display = '';
+            if (iconLt) iconLt.style.display = 'none';
+            if (btn) btn.title = 'Switch to light mode';
+        }
+    }
+
+    // Restore saved preference
+    const saved = localStorage.getItem('ms_theme') || 'dark';
+    applyTheme(saved);
+
+    if (btn) btn.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme') || 'dark';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+})();
+
+// ── Controls bar Auto-fill + Add Input ──────────────────────
+document.getElementById('btn-ctrl-autofill')?.addEventListener('click', () => {
+    if (typeof autoFillInputs === 'function') autoFillInputs();
+});
+document.getElementById('btn-ctrl-add')?.addEventListener('click', () => {
+    if (typeof addInput === 'function') addInput();
+});
+
+(function() {
+    let activeTooltip = null;
+    let activeAnchor  = null;
+
+    function positionTooltip(anchor, card) {
+        const r = anchor.getBoundingClientRect();
+        const cardW = 300;
+        let left = r.left + window.scrollX;
+        // Don't overflow right edge
+        if (left + cardW > window.innerWidth - 12) {
+            left = window.innerWidth - cardW - 12;
+        }
+        card.style.top  = (r.bottom + window.scrollY + 10) + 'px';
+        card.style.left = left + 'px';
+    }
+
+    document.querySelectorAll('.tooltip-anchor').forEach(anchor => {
+        const card = anchor.querySelector('.tooltip-card');
+        // Move card to body so it escapes any stacking context
+        card.style.position = 'fixed';
+        card.style.top = '-9999px';
+        document.body.appendChild(card);
+
+        anchor.addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = activeTooltip === card;
+            // Close any open tooltip
+            if (activeTooltip) {
+                activeTooltip.classList.remove('show');
+                activeTooltip = null;
+                activeAnchor  = null;
+            }
+            if (!isOpen) {
+                card.style.position = 'absolute';
+                positionTooltip(anchor, card);
+                card.classList.add('show');
+                activeTooltip = card;
+                activeAnchor  = anchor;
+            }
+        });
+    });
+
+    document.addEventListener('click', () => {
+        if (activeTooltip) {
+            activeTooltip.classList.remove('show');
+            activeTooltip = null;
+            activeAnchor  = null;
+        }
+    });
+
+    // Reposition on scroll/resize
+    window.addEventListener('scroll', () => {
+        if (activeTooltip && activeAnchor) positionTooltip(activeAnchor, activeTooltip);
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+        if (activeTooltip && activeAnchor) positionTooltip(activeAnchor, activeTooltip);
+    });
+})();
 </script>
 </body>
 </html>

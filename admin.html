@@ -285,9 +285,78 @@
         @media (max-width: 600px) {
             .field-row { grid-template-columns: 1fr; }
         }
+
+        /* ── Password gate ────────────────────────────────────── */
+        #admin-gate {
+            position: fixed; inset: 0;
+            background: var(--bg);
+            z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gate-box {
+            width: min(360px, 90vw);
+            background: rgba(255,255,255,0.045);
+            border: 1px solid var(--border-hi);
+            border-radius: 14px;
+            padding: 36px 32px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .gate-title {
+            font-size: 20px; font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .gate-title span {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gate-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: var(--text-3);
+            letter-spacing: 0.04em; margin-top: -12px;
+        }
+        .gate-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-hi);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; letter-spacing: 0.08em;
+            outline: none; width: 100%;
+            transition: all 0.2s;
+        }
+        .gate-input:focus { border-color: var(--accent); background: rgba(126,255,196,0.04); }
+        .gate-input.error { border-color: #ff6b6b; }
+        .gate-btn {
+            width: 100%; padding: 12px;
+            border: none; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #07070d;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .gate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(126,255,196,0.25); }
+        .gate-error {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #ff6b6b;
+            letter-spacing: 0.04em; display: none;
+        }
     </style>
 </head>
 <body>
+
+<!-- Password gate — shown until correct password entered -->
+<div id="admin-gate">
+    <div class="gate-box">
+        <div class="gate-title">Mockup <span>Admin</span></div>
+        <div class="gate-sub">Private area — enter password to continue</div>
+        <input type="password" class="gate-input" id="gate-input" placeholder="Password" autocomplete="current-password">
+        <div class="gate-error" id="gate-error">Incorrect password — try again</div>
+        <button class="gate-btn" id="gate-btn">Enter</button>
+    </div>
+</div>
 <div class="admin-wrap">
 
     <!-- Header -->
@@ -395,6 +464,41 @@
 </div>
 
 <script>
+// ── Password gate ─────────────────────────────────────────────
+// Change this to your own password before deploying
+const ADMIN_PASSWORD = 'mockup-admin-2026';
+
+(function() {
+    const gate    = document.getElementById('admin-gate');
+    const input   = document.getElementById('gate-input');
+    const btn     = document.getElementById('gate-btn');
+    const errMsg  = document.getElementById('gate-error');
+
+    // Already authenticated this session
+    if (sessionStorage.getItem('ms_admin') === '1') {
+        gate.style.display = 'none';
+        return;
+    }
+
+    function attempt() {
+        if (input.value === ADMIN_PASSWORD) {
+            sessionStorage.setItem('ms_admin', '1');
+            gate.style.display = 'none';
+        } else {
+            input.classList.add('error');
+            errMsg.style.display = 'block';
+            input.value = '';
+            input.focus();
+            setTimeout(() => input.classList.remove('error'), 600);
+        }
+    }
+
+    btn.addEventListener('click', attempt);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
+    // Focus input on load
+    setTimeout(() => input.focus(), 50);
+})();
+
 // ── ID generation ────────────────────────────────────────────
 function toId(name) {
     return name.toLowerCase()
